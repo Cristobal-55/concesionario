@@ -1,0 +1,6 @@
+# Carpetas temporales de Visual Studio
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
