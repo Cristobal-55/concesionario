@@ -1,119 +1,141 @@
-﻿using Concesionario.Models;
+﻿using Concesionario.DTOs;
+using Concesionario.Models;
 using Microsoft.EntityFrameworkCore;
 
+namespace Concesionario.Endpoints;
 
-namespace concesionario.Endpoints
+public static class VehiculoApi
 {
-    public static class VehiculoApi
+    public static void MapVehiculoApi(this IEndpointRouteBuilder app)
     {
-        public static void MapVehiculoApi(this WebApplication app)
+        var vehiculos = app.MapGroup("/api/vehiculos")
+                           .WithTags("Vehículos");
+
+        // GET: Obtener todos los vehículos
+        vehiculos.MapGet("/", async (ConcesionariodbContext db) =>
         {
-            var vehiculos = app.MapGroup("/api/vehiculos")
-                .WithTags("Vehículos")
-                .RequireAuthorization();
+            var listaVehiculos = await db.Vehiculos
+                .Select(v => new VehiculoResponseDto(
+                    v.IdVehiculo, v.Patente, v.Modelo, v.Anio, v.Precio,
+                    v.Estado, v.IdMarca, v.IdTipoVehiculo, v.IdTipoCombustible, v.IdSucursal
+                ))
+                .ToListAsync();
 
-            // GET: Obtener todos los vehículos
-            vehiculos.MapGet("/", async (ConcesionariodbContext db) =>
+            return Results.Ok(listaVehiculos);
+        })
+        .WithName("GetVehiculos");
+
+        // GET: Obtener vehículo por ID
+        vehiculos.MapGet("/{id:int}", async (int id, ConcesionariodbContext db) =>
+        {
+            var vehiculo = await db.Vehiculos
+                .Where(v => v.IdVehiculo == id)
+                .Select(v => new VehiculoResponseDto(
+                    v.IdVehiculo, v.Patente, v.Modelo, v.Anio, v.Precio,
+                    v.Estado, v.IdMarca, v.IdTipoVehiculo, v.IdTipoCombustible, v.IdSucursal
+                ))
+                .FirstOrDefaultAsync();
+
+            return vehiculo is not null ? Results.Ok(vehiculo) : Results.NotFound("Vehículo no encontrado");
+        });
+
+        // GET: Buscar vehículos por marca
+        vehiculos.MapGet("/marca/{idMarca:int}", async (int idMarca, ConcesionariodbContext db) =>
+        {
+            var vehiculosPorMarca = await db.Vehiculos
+                .Where(v => v.IdMarca == idMarca)
+                .Select(v => new VehiculoResponseDto(
+                    v.IdVehiculo, v.Patente, v.Modelo, v.Anio, v.Precio,
+                    v.Estado, v.IdMarca, v.IdTipoVehiculo, v.IdTipoCombustible, v.IdSucursal
+                ))
+                .ToListAsync();
+
+            if (!vehiculosPorMarca.Any())
+                return Results.NotFound("No hay vehículos de esa marca");
+
+            return Results.Ok(vehiculosPorMarca);
+        })
+        .WithName("GetVehiculosPorMarca");
+
+        // POST: Crear nuevo vehículo
+        vehiculos.MapPost("/", async (CreateVehiculoDto dto, ConcesionariodbContext db) =>
+        {
+            // Validar existencia de referencias (Foreign Keys)
+            var marcaExiste = await db.Marcas.AnyAsync(m => m.IdMarca == dto.IdMarca);
+            var sucursalExiste = await db.Sucursals.AnyAsync(s => s.IdSucursal == dto.IdSucursal);
+
+            if (!marcaExiste || !sucursalExiste)
             {
-                var listaVehiculos = await db.Vehiculos.ToListAsync();
+                return Results.BadRequest("La Marca o Sucursal especificada no existe.");
+            }
 
-                return Results.Ok(listaVehiculos);
-            })
-            .WithName("GetVehiculos");
-
-            // GET: Obtener vehículo por ID
-            vehiculos.MapGet("/{id:int}", async (int id, ConcesionariodbContext db) =>
+            try
             {
-                var vehiculo = await db.Vehiculos.FindAsync(id);
+                var vehiculo = new Vehiculo
+                {
+                    Patente = dto.Patente,
+                    Modelo = dto.Modelo,
+                    Anio = dto.Anio,
+                    Precio = dto.Precio,
+                    Estado = dto.Estado,
+                    IdMarca = dto.IdMarca,
+                    IdTipoVehiculo = dto.IdTipoVehiculo,
+                    IdTipoCombustible = dto.IdTipoCombustible,
+                    IdSucursal = dto.IdSucursal
+                };
 
-                if (vehiculo is null)
-                    return Results.NotFound("Vehículo no encontrado");
-
-                return Results.Ok(vehiculo);
-            })
-            .WithName("GetVehiculoById");
-
-            // GET: Buscar vehículos por marca
-            vehiculos.MapGet("/marca/{idMarca:int}", async (
-                int idMarca,
-                ConcesionariodbContext db) =>
-            {
-                var vehiculosPorMarca = await db.Vehiculos
-                    .Where(v => v.IdMarca == idMarca)
-                    .ToListAsync();
-
-                if (!vehiculosPorMarca.Any())
-                    return Results.NotFound("No hay vehículos de esa marca");
-
-                return Results.Ok(vehiculosPorMarca);
-            })
-            .WithName("GetVehiculosPorMarca");
-
-            // POST: Crear nuevo vehículo
-            vehiculos.MapPost("/", async (
-                Vehiculo vehiculo,
-                ConcesionariodbContext db) =>
-            {
                 db.Vehiculos.Add(vehiculo);
-
                 await db.SaveChangesAsync();
 
-                return Results.Created(
-                    $"/api/vehiculos/{vehiculo.IdVehiculo}",
-                    vehiculo);
-            })
-            .WithName("CreateVehiculo")
-            .RequireAuthorization(policy =>
-                policy.RequireRole("admin"));
+                var response = new VehiculoResponseDto(
+                    vehiculo.IdVehiculo, vehiculo.Patente, vehiculo.Modelo, vehiculo.Anio, vehiculo.Precio,
+                    vehiculo.Estado, vehiculo.IdMarca, vehiculo.IdTipoVehiculo, vehiculo.IdTipoCombustible, vehiculo.IdSucursal
+                );
 
-            // PUT: Actualizar vehículo
-            vehiculos.MapPut("/{id:int}", async (
-                int id,
-                Vehiculo vehiculoActualizado,
-                ConcesionariodbContext db) =>
+                return Results.Created($"/api/vehiculos/{vehiculo.IdVehiculo}", response);
+            }
+            catch (DbUpdateException ex)
             {
-                var vehiculo = await db.Vehiculos.FindAsync(id);
+                var errorDetalle = ex.InnerException?.Message ?? ex.Message;
+                return Results.Problem($"Error en base de datos al guardar vehículo: {errorDetalle}");
+            }
+        });
 
-                if (vehiculo is null)
-                    return Results.NotFound("Vehículo no encontrado");
+        // PUT: Actualizar vehículo
+        vehiculos.MapPut("/{id:int}", async (int id, UpdateVehiculoDto dto, ConcesionariodbContext db) =>
+        {
+            var vehiculo = await db.Vehiculos.FindAsync(id);
 
-                vehiculo.Patente = vehiculoActualizado.Patente;
-                vehiculo.Modelo = vehiculoActualizado.Modelo;
-                vehiculo.Anio = vehiculoActualizado.Anio;
-                vehiculo.Precio = vehiculoActualizado.Precio;
-                vehiculo.Estado = vehiculoActualizado.Estado;
-                vehiculo.IdMarca = vehiculoActualizado.IdMarca;
-                vehiculo.IdTipoVehiculo = vehiculoActualizado.IdTipoVehiculo;
-                vehiculo.IdTipoCombustible = vehiculoActualizado.IdTipoCombustible;
-                vehiculo.IdSucursal = vehiculoActualizado.IdSucursal;
+            if (vehiculo is null)
+                return Results.NotFound("Vehículo no encontrado");
 
-                await db.SaveChangesAsync();
+            vehiculo.Patente = dto.Patente;
+            vehiculo.Modelo = dto.Modelo;
+            vehiculo.Anio = dto.Anio;
+            vehiculo.Precio = dto.Precio;
+            vehiculo.Estado = dto.Estado;
+            vehiculo.IdMarca = dto.IdMarca;
+            vehiculo.IdTipoVehiculo = dto.IdTipoVehiculo;
+            vehiculo.IdTipoCombustible = dto.IdTipoCombustible;
+            vehiculo.IdSucursal = dto.IdSucursal;
 
-                return Results.Ok(vehiculo);
-            })
-            .WithName("UpdateVehiculo")
-            .RequireAuthorization(policy =>
-                policy.RequireRole("admin"));
+            await db.SaveChangesAsync();
 
-            // DELETE: Eliminar vehículo
-            vehiculos.MapDelete("/{id:int}", async (
-                int id,
-                ConcesionariodbContext db) =>
-            {
-                var vehiculo = await db.Vehiculos.FindAsync(id);
+            return Results.NoContent();
+        });
 
-                if (vehiculo is null)
-                    return Results.NotFound("Vehículo no encontrado");
+        // DELETE: Eliminar vehículo
+        vehiculos.MapDelete("/{id:int}", async (int id, ConcesionariodbContext db) =>
+        {
+            var vehiculo = await db.Vehiculos.FindAsync(id);
 
-                db.Vehiculos.Remove(vehiculo);
+            if (vehiculo is null)
+                return Results.NotFound("Vehículo no encontrado");
 
-                await db.SaveChangesAsync();
+            db.Vehiculos.Remove(vehiculo);
+            await db.SaveChangesAsync();
 
-                return Results.NoContent();
-            })
-            .WithName("DeleteVehiculo")
-            .RequireAuthorization(policy =>
-                policy.RequireRole("admin"));
-        }
+            return Results.NoContent();
+        });
     }
 }
