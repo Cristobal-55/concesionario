@@ -1,16 +1,10 @@
 using Concesionario.Endpoints;
 using Concesionario.Models;
-
 using Scalar.AspNetCore;
 //using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-<<<<<<< HEAD
-using concesionario.Endpoints;
-=======
-using Concesionario.Endpoints;
->>>>>>> 1b2b4a605c76548b61ce91e353b7a5350d6be88b
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,12 +58,7 @@ app.MapCombustibleApi();
 app.MapTipoVehiculoApi();
 app.MapSucursalApi();
 app.MapUsuarioApi();
-<<<<<<< HEAD
 app.MapVentaApi();
-app.MapVehiculoApi();
-=======
 app.MapMantencionApi();
 app.MapVehiculoApi();
-
->>>>>>> 1b2b4a605c76548b61ce91e353b7a5350d6be88b
 app.Run();

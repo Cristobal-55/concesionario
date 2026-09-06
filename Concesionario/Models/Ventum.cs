@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Concesionario.Models;
 
@@ -21,11 +22,11 @@ public partial class Ventum
 
     public virtual ICollection<Factura> Facturas { get; set; } = new List<Factura>();
 
-    public virtual Usuario IdClienteNavigation { get; set; } = null!;
+    [JsonIgnore] public virtual Usuario IdClienteNavigation { get; set; } = null!;
 
-    public virtual Sucursal IdSucursalNavigation { get; set; } = null!;
+    [JsonIgnore] public virtual Sucursal IdSucursalNavigation { get; set; } = null!;
 
-    public virtual Vehiculo IdVehiculoNavigation { get; set; } = null!;
+    [JsonIgnore] public virtual Vehiculo IdVehiculoNavigation { get; set; } = null!;
 
-    public virtual Usuario IdVendedorNavigation { get; set; } = null!;
+    [JsonIgnore] public virtual Usuario IdVendedorNavigation { get; set; } = null!;
 }
