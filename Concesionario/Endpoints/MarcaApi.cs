@@ -15,7 +15,7 @@ namespace Concesionario.Endpoints
             {
                 db.Marcas.Add(marca);
                 await db.SaveChangesAsync();
-                return Results.Created($"/api/consolas/{marca.IdMarca}", marca);
+                return Results.Created($"/api/Marca/{marca.IdMarca}", marca);
             });
             marca.MapGet("/{id:int}", async (int id, ConcesionariodbContext db) =>
                 await db.Marcas.FindAsync(id) is Marca m ? Results.Ok(m) : Results.NotFound());
