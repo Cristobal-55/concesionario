@@ -6,6 +6,7 @@ using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using concesionario.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,5 +60,6 @@ app.MapCombustibleApi();
 app.MapTipoVehiculoApi();
 app.MapSucursalApi();
 app.MapUsuarioApi();
-
+app.MapVentaApi();
+app.MapVehiculoApi();
 app.Run();
