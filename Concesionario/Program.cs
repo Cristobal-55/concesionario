@@ -55,5 +55,5 @@ app.UseHttpsRedirection();
 
 app.MapRolApi();
 app.MapMarcaApi();
-
+app.MapCombustibleApi();
 app.Run();
