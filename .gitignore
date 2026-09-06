@@ -1,5 +1,6 @@
 # Carpetas temporales de Visual Studio
 .vs/
+Concesionario/appsettings.json
 [Bb]in/
 [Oo]bj/
 *.user
