@@ -58,4 +58,6 @@ app.MapMarcaApi();
 app.MapCombustibleApi();
 app.MapTipoVehiculoApi();
 app.MapSucursalApi();
+app.MapUsuarioApi();
+
 app.Run();
