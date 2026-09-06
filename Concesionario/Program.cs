@@ -57,5 +57,5 @@ app.MapRolApi();
 app.MapMarcaApi();
 app.MapCombustibleApi();
 app.MapTipoVehiculoApi();
-
+app.MapSucursalApi();
 app.Run();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Concesionario.Models;
 
@@ -15,13 +16,13 @@ public partial class Sucursal
 
     public string Ciudad { get; set; } = null!;
 
-    public virtual ICollection<ArriendoVehiculo> ArriendoVehiculos { get; set; } = new List<ArriendoVehiculo>();
+    [JsonIgnore] public virtual ICollection<ArriendoVehiculo> ArriendoVehiculos { get; set; } = new List<ArriendoVehiculo>();
 
-    public virtual ICollection<Mantencion> Mantencions { get; set; } = new List<Mantencion>();
+    [JsonIgnore] public virtual ICollection<Mantencion> Mantencions { get; set; } = new List<Mantencion>();
 
-    public virtual ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>();
+    [JsonIgnore] public virtual ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>();
 
-    public virtual ICollection<Vehiculo> Vehiculos { get; set; } = new List<Vehiculo>();
+    [JsonIgnore] public virtual ICollection<Vehiculo> Vehiculos { get; set; } = new List<Vehiculo>();
 
-    public virtual ICollection<Ventum> Venta { get; set; } = new List<Ventum>();
+    [JsonIgnore] public virtual ICollection<Ventum> Venta { get; set; } = new List<Ventum>();
 }
