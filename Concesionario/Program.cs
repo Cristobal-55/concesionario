@@ -56,4 +56,6 @@ app.UseHttpsRedirection();
 app.MapRolApi();
 app.MapMarcaApi();
 app.MapCombustibleApi();
+app.MapTipoVehiculoApi();
+
 app.Run();
