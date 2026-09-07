@@ -8,7 +8,8 @@ namespace concesionario.Endpoints
         public static void MapFacturaApi(this WebApplication app)
         {
             var facturas = app.MapGroup("/api/facturas")
-                .WithTags("Facturas");
+                .WithTags("Facturas")
+                .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             // GET: Obtener todas las facturas
             facturas.MapGet("/", async (ConcesionariodbContext db) =>

@@ -8,7 +8,7 @@ namespace Concesionario.Endpoints
         public static void MapSucursalApi(this WebApplication app)
         {
             //asignamos la dirección api sucursal
-            var sucursal = app.MapGroup("/api/sucursal").WithTags("Sucursal");
+            var sucursal = app.MapGroup("/api/sucursal").WithTags("Sucursal").RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             //api para listar todos los sucursal 
             sucursal.MapGet("/", async (ConcesionariodbContext db) =>

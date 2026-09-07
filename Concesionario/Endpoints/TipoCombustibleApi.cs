@@ -24,7 +24,7 @@ namespace Concesionario.Endpoints
                 db.TipoCombustibles.Add(combustible);
                 await db.SaveChangesAsync();
                 return Results.Created($"/api/combustible/{combustible.IdTipoCombustible}", combustible);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             combustible.MapGet("/{id:int}", async (int id, ConcesionariodbContext db) =>
             {
@@ -40,7 +40,7 @@ namespace Concesionario.Endpoints
                 return combustibleEncontrado is null
                     ? Results.NotFound()
                     : Results.Ok(combustibleEncontrado);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             // api para editar
             combustible.MapPut("/{id:int}", async (int id, TipoCombustible c, ConcesionariodbContext db) =>
@@ -52,7 +52,7 @@ namespace Concesionario.Endpoints
                 exist.Nombre = c.Nombre;
                 await db.SaveChangesAsync();
                 return Results.Ok(exist);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             // api para eliminar
             combustible.MapDelete("/{id:int}", async (int id, ConcesionariodbContext db) =>
@@ -63,7 +63,7 @@ namespace Concesionario.Endpoints
                 db.TipoCombustibles.Remove(exist);
                 await db.SaveChangesAsync();
                 return Results.NoContent();
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
         }
     }
 }

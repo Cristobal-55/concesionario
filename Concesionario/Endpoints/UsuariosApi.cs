@@ -2,6 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Concesionario.Dtos; 
 
+using Concesionario.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
 namespace Concesionario.Endpoints
 {
     public static class UsuarioApi
@@ -26,7 +33,7 @@ namespace Concesionario.Endpoints
                     .ToListAsync();
 
                 return Results.Ok(usuarios);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             // 2. Obtener usuario por ID
             usuario.MapGet("/{id:int}", async (int id, ConcesionariodbContext db) =>
@@ -47,10 +54,10 @@ namespace Concesionario.Endpoints
                 );
 
                 return Results.Ok(dto);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             // 3. Crear nuevo usuario
-            usuario.MapPost("/", async (CrearUsuarioDto dto, ConcesionariodbContext db) =>
+            usuario.MapPost("/", async (CrearUsuarioDto dto, ConcesionariodbContext db, AuthService auth) =>
             {
                 // Verificar si el correo ya está registrado
                 var existeEmail = await db.Usuarios.AnyAsync(u => u.Email == dto.Email);
@@ -61,10 +68,12 @@ namespace Concesionario.Endpoints
                 {
                     Nombre = dto.Nombre,
                     Email = dto.Email,
-                    Password = dto.Password, 
+                    Password = string.Empty,
                     Telefono = dto.Telefono,
                     IdRol = dto.IdRol
                 };
+
+                nuevoUsuario.Password = auth.HashPassword(nuevoUsuario, dto.Password);
 
                 db.Usuarios.Add(nuevoUsuario);
                 await db.SaveChangesAsync();
@@ -81,6 +90,38 @@ namespace Concesionario.Endpoints
                 return Results.Created($"/api/Usuario/{nuevoUsuario.IdUsuario}", response);
             });
 
+            usuario.MapPost("/login", async (LoginDto dto, ConcesionariodbContext db,
+                AuthService auth, IConfiguration config) =>
+            {
+                var usuarioExistente = await db.Usuarios
+                    .Include(u => u.IdRolNavigation)
+                    .FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+                if (usuarioExistente is null ||
+                    auth.VerifyPassword(usuarioExistente, dto.Password) == PasswordVerificationResult.Failed)
+                    return Results.Unauthorized();
+
+                var claims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, usuarioExistente.IdUsuario.ToString()),
+                    new(ClaimTypes.Email, usuarioExistente.Email),
+                    new(ClaimTypes.Name, usuarioExistente.Nombre),
+                    new(ClaimTypes.Role, usuarioExistente.IdRolNavigation.Nombre)
+                };
+
+                var key = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
+                var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var token = new JwtSecurityToken(
+                    issuer: config["Jwt:Issuer"],
+                    audience: config["Jwt:Audience"],
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(60),
+                    signingCredentials: credenciales);
+
+                return Results.Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+            });
+
             // 4. Actualizar usuario existente
             usuario.MapPut("/{id:int}", async (int id, ActualizarUsuarioDto dto, ConcesionariodbContext db) =>
             {
@@ -94,7 +135,7 @@ namespace Concesionario.Endpoints
 
                 await db.SaveChangesAsync();
                 return Results.Ok("Usuario actualizado correctamente.");
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             // 5. Eliminar usuario
             usuario.MapDelete("/{id:int}", async (int id, ConcesionariodbContext db) =>
@@ -107,7 +148,7 @@ namespace Concesionario.Endpoints
 
                 return Results.NoContent();
 
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
         }
     }
 }

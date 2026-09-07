@@ -26,4 +26,9 @@
         string? Telefono,
         int IdRol
     );
+
+    public record LoginDto(
+        string Email,
+        string Password
+    );
 }

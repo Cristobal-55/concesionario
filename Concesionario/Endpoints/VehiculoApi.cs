@@ -99,7 +99,7 @@ public static class VehiculoApi
                 var errorDetalle = ex.InnerException?.Message ?? ex.Message;
                 return Results.Problem($"Error en base de datos al guardar vehículo: {errorDetalle}");
             }
-        });
+        }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         // PUT: Actualizar vehículo
         vehiculos.MapPut("/{id:int}", async (int id, UpdateVehiculoDto dto, ConcesionariodbContext db) =>
@@ -122,7 +122,7 @@ public static class VehiculoApi
             await db.SaveChangesAsync();
 
             return Results.NoContent();
-        });
+        }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         // DELETE: Eliminar vehículo
         vehiculos.MapDelete("/{id:int}", async (int id, ConcesionariodbContext db) =>
@@ -136,6 +136,6 @@ public static class VehiculoApi
             await db.SaveChangesAsync();
 
             return Results.NoContent();
-        });
+        }).RequireAuthorization(policy => policy.RequireRole("Admin"));
     }
 }

@@ -16,7 +16,7 @@ namespace Concesionario.Endpoints
                 db.TipoVehiculos.Add(tvehiculo);
                 await db.SaveChangesAsync();
                 return Results.Created($"/api/TipoVehiculo/{tvehiculo.IdTipoVehiculo}", tvehiculo);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
             tvehiculo.MapGet("/{id:int}", async (int id, ConcesionariodbContext db) =>
                 await db.TipoVehiculos.FindAsync(id) is TipoVehiculo tv ? Results.Ok(tv) : Results.NotFound());
             //editar tipo vehiculo
@@ -29,7 +29,7 @@ namespace Concesionario.Endpoints
                 exist.Nombre = tv.Nombre;
                 await db.SaveChangesAsync();
                 return Results.Ok(exist);
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
             //eliminar tipo vehiculo
             tvehiculo.MapDelete("/{id:int}", async (int id, ConcesionariodbContext db) =>
             {
@@ -39,7 +39,7 @@ namespace Concesionario.Endpoints
                 db.TipoVehiculos.Remove(exist);
                 await db.SaveChangesAsync();
                 return Results.NoContent();
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         }
     }

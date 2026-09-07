@@ -8,7 +8,7 @@ namespace Concesionario.Endpoints
         public static void MapRolApi(this WebApplication app)
         {
             //asignamos la dirección api roles
-            var rol = app.MapGroup("/api/rol").WithTags("Rol");
+            var rol = app.MapGroup("/api/rol").WithTags("Rol").RequireAuthorization(policy => policy.RequireRole("Admin"));
             //api para listar todos los roles 
             rol.MapGet("/", async (ConcesionariodbContext db) =>
                 await db.Rols
